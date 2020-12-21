@@ -32,3 +32,35 @@ train = spark.read.csv(
 
 # make the dataframe queriable as a temporary view
 train.createOrReplaceTempView('train')
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select count(*) from train
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from train limit 5
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select year(date) as year, sum(sales) as sales from train group by year(date) order by year;
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC t's very clear from the data that there is a generally upward trend in total unit sales across the stores. If we had better knowledge of the markets served by these stores, we might wish to identify whether there is a maximum growth capacity we'd expect to approach over the life of our forecast. But without that knowledge and by just quickly eyeballing this dataset, it feels safe to assume that if our goal is to make a forecast a few days, months or even a year out, we might expect continued linear growth over that time span.
+# MAGIC 
+# MAGIC Now let's examine seasonality. If we aggregate the data around the individual months in each year, a distinct yearly seasonal pattern is observed which seems to grow in scale with overall growth in sales:
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT 
+# MAGIC   TRUNC(date, 'MM') as month,
+# MAGIC   SUM(sales) as sales
+# MAGIC FROM train
+# MAGIC GROUP BY TRUNC(date,'MM')
+# MAGIC ORDER BY month
