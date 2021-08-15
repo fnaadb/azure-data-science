@@ -1,0 +1,8 @@
+{
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true,
+    "python.setinterpreter": "/home/fnaadb/anaconda3/envs/nlpinaction/bin/python",
+    "files.watcherExclude": {
+        "**/target": true
+    }
+}
