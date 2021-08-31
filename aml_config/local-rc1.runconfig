@@ -1,0 +1,80 @@
+{
+    "script": "appliedai/quora/training/azure_ml_control_script.py",
+    "arguments": [],
+    "framework": "Python",
+    "communicator": "None",
+    "target": "local",
+    "environment": {
+        "name": "ariefmlwor-env1",
+        "python": {
+            "interpreterPath": "python",
+            "userManagedDependencies": false,
+            "condaDependencies": {
+                "channels": [
+                    "conda-forge"
+                ],
+                "dependencies": [
+                    "python=3.6.2",
+                    {
+                        "pip": [
+                            "azureml-defaults",
+                            "debugpy",
+                            "scikit-learn",
+                            "numpy",
+                            "pandas",
+                            "nltk",
+                            "fuzzywuzzy",
+                            "bs4",
+                            "tqdm",
+                            "spacy"
+                        ]
+                    }
+                ],
+                "name": "project_environment"
+            },
+            "baseCondaEnvironment": null
+        },
+        "environmentVariables": {},
+        "docker": {
+            "baseImage": "mcr.microsoft.com/azureml/base:intelmpi2018.3-ubuntu16.04",
+            "baseDockerfile": null,
+            "baseImageRegistry": {
+                "address": null,
+                "username": null,
+                "password": null
+            },
+            "enabled": false,
+            "arguments": []
+        },
+        "spark": {
+            "repositories": [],
+            "packages": [],
+            "precachePackages": true
+        },
+        "inferencingStackVersion": null
+    },
+    "history": {
+        "outputCollection": true,
+        "directoriesToWatch": [
+            "logs"
+        ]
+    },
+    "docker": {
+        "useDocker": true
+    },
+    "data": {
+        "quora_training": {
+            "dataLocation": {
+                "dataset": {
+                    "id": "c350cd6e-11f0-44e5-8b9b-e14784995c12"
+                },
+                "dataPath": null
+            },
+            "createOutputDirectories": false,
+            "mechanism": "Direct",
+            "environmentVariableName": "quora_training",
+            "pathOnCompute": null,
+            "overwrite": false
+        }
+    }
+}

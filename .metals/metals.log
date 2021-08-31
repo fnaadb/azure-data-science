@@ -1,0 +1,4 @@
+[0m2021.08.30 20:17:13 INFO  Started: Metals version 0.10.5 in workspace 'C:\Users\arbavan\OneDrive - Microsoft\presentation\retail\stephen\mywork\new_appliedai\azure-data-science' for client Visual Studio Code 1.59.1.[0m
+[0m2021.08.30 20:17:14 INFO  time: initialize in 1.88s[0m
+[0m2021.08.30 20:17:16 WARN  Build server is not auto-connectable.[0m
+[0m2021.08.30 20:17:16 WARN  no build tool detected in workspace 'C:\Users\arbavan\OneDrive - Microsoft\presentation\retail\stephen\mywork\new_appliedai\azure-data-science'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m

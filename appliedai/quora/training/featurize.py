@@ -2,25 +2,34 @@
 from typing import Dict
 import pandas as pd
 import numpy as np
-import distance
+#arief
+#import distance
 from nltk.stem import PorterStemmer
 from bs4 import BeautifulSoup
 import re
 from nltk.corpus import stopwords
 from fuzzywuzzy import fuzz
+import debugpy
 
 
 import re
 import time
 import warnings
-
+import nltk
+nltk.download('stopwords')
 from nltk.corpus import stopwords
+from pandas.core.frame import DataFrame
 from sklearn.preprocessing import normalize
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 warnings.filterwarnings("ignore")
+
+#the whole damn spacy thing
+import subprocess
 import sys
-import os 
+import os
+from spacy.cli.download import download as spacy_download
+
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
@@ -36,10 +45,51 @@ import spacy
 
 
 class Featurize:
+
     SAFE_DIV = 0.0001
     STOP_WORDS = stopwords.words("english")
     porter = PorterStemmer()
     pattern = re.compile('\W')
+    spacy_download('en_core_web_sm')
+
+    
+        
+
+    def a_construct_initial_features_without_preprocessing_with_dataframe(self,df:pd.DataFrame)->pd.DataFrame:
+        df=self.__fill_nulls_na(df)
+        df.head(2)
+        df=self.__construct_obvious_features(df)
+        return df
+
+    def b_construct_features_with_preprocessing_with_dataframe(self,df:pd.DataFrame)->pd.DataFrame:
+        df=self.__extract_features(df)
+        return df
+
+    def c_construct_tfidf_w2vec_features_with_dataframe(self,df:pd.DataFrame)->pd.DataFrame:
+        df=self.__fill_nulls_na(df)
+        print("starting dictionary")
+        dict_tfidf=self.__calculate_tf_idf(df)
+        print("completed dictionary")
+        df=self.__calculate_tfidf_weighted_question_word2vec(df,dict_tfidf,'question1','q1_feats_m')
+        print("calculated q1 tfidf")
+        df=self.__calculate_tfidf_weighted_question_word2vec(df,dict_tfidf,'question2','q2_feats_m')
+        print("calculated q2 tfidf")
+        df3_q1 = pd.DataFrame(df.q1_feats_m.values.tolist(), index= df.index)
+        print("----------")
+        df3_q2 = pd.DataFrame(df.q2_feats_m.values.tolist(), index= df.index)
+        print("what")
+        df3_q1['id']=df['id']
+        df3_q2['id']=df['id']
+        print("id sync")
+        finalframe  = df3_q1.merge(df3_q2, on='id',how='left')
+        print("merge")
+        return finalframe
+
+    def d_construct_final_features(self,dfppro:pd.DataFrame,dfdfnlp:pd.DataFrame,dfword2vec:pd.DataFrame)->pd.DataFrame:
+        result = self.__mash_drop_duplicate_fields(dfppro,dfdfnlp,dfword2vec)
+        return result
+
+
     #public Methods============================================================================================================
     def a_construct_initial_features_without_preprocessing(self, dirpath:str='../data', input_file_name:str='local_train.csv',output_file_name: str='local_df_fe_without_preprocessing_train.csv'):
         df=pd.read_csv("%s/%s"%(dirpath,input_file_name))
@@ -68,6 +118,8 @@ class Featurize:
         finalframe  = df3_q1.merge(df3_q2, on='id',how='left')
         finalframe.to_csv("%s/%s"%(dirpath,output_file_name), index=False)
 
+    
+
     def d_construct_final_features(self,dirpath:str='../data', without_processing_file:str='local_df_fe_without_preprocessing_train.csv',nlp_features_train:str='local_nlp_features_train.csv',word2vecfeatures:str='local_word2vec_features.csv', finalfeaturesfile:str="local_final_features.csv"):
         dfppro=pd.read_csv("%s/%s"%(dirpath,without_processing_file))
         dfdfnlp=pd.read_csv("%s/%s"%(dirpath,nlp_features_train))
@@ -77,6 +129,8 @@ class Featurize:
 
 
     #main private methods==========================================================================================================    
+    
+
     
     def __mash_drop_duplicate_fields(self,dfppro:pd.DataFrame,nlp_dataframe:pd.DataFrame,dfword2vec:pd.DataFrame)->pd.DataFrame:
         df1 = nlp_dataframe.drop(['qid1','qid2','question1','question2'],axis=1)
@@ -143,7 +197,9 @@ class Featurize:
         df["token_sort_ratio"]      = df.apply(lambda x: fuzz.token_sort_ratio(x["question1"], x["question2"]), axis=1)
         df["fuzz_ratio"]            = df.apply(lambda x: fuzz.QRatio(x["question1"], x["question2"]), axis=1)
         df["fuzz_partial_ratio"]    = df.apply(lambda x: fuzz.partial_ratio(x["question1"], x["question2"]), axis=1)
-        df["longest_substr_ratio"]  = df.apply(lambda x: self.__get_longest_substr_ratio(x["question1"], x["question2"]), axis=1)
+        #arief to avoid custom deployment of the modules.
+        #df["longest_substr_ratio"]  = df.apply(lambda x: self.__get_longest_substr_ratio(x["question1"], x["question2"]), axis=1)
+        df["longest_substr_ratio"]  = 0.5
         return df
         
 
@@ -166,12 +222,16 @@ class Featurize:
 
     def __calculate_tfidf_weighted_question_word2vec(self, df:pd.DataFrame,word2tfidf:dict,column_to_be_analyzed:str,feature_column_name:str)->pd.DataFrame:
         # en_vectors_web_lg, which includes over 1 million unique vectors.
+        #subprocess.call(['python', '-m', "spacy", "download", "en_core_web_sm"])
+        #print("before spacy load")
+       
         nlp = spacy.load('en_core_web_sm')
+        print("arief", nlp("show me the money"))
 
         vecs1 = []
         # https://github.com/noamraph/tqdm
         # tqdm is used to print the progress bar
-        for qu1 in df[column_to_be_analyzed]:
+        for qu1 in tqdm(list(df[column_to_be_analyzed])):
             doc1 = nlp(qu1) 
             # 384 is the number of dimensions of vectors 
             mean_vec1 = np.zeros([len(doc1), len(doc1[0].vector)])
@@ -212,6 +272,7 @@ class Featurize:
             w1 = set(map(lambda word: word.lower().strip(), row['question1'].split(" ")))
             w2 = set(map(lambda word: word.lower().strip(), row['question2'].split(" ")))    
             return 1.0 * len(w1 & w2)/(len(w1) + len(w2))
+    """ arief avoid aml custom deployment of the module
     
     def __get_longest_substr_ratio(self,a, b):
         strs = list(distance.lcsubstrings(a, b))
@@ -219,6 +280,8 @@ class Featurize:
             return 0
         else:
             return len(strs[0]) / (min(len(a), len(b)) + 1)
+
+    """
     def __preprocess(self,x):
         
         x = str(x).lower()
