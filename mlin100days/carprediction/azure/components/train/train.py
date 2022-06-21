@@ -1,9 +1,11 @@
 import argparse
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import classification_report
 import os
 import pandas as pd
 import mlflow
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+
 
 def select_first_file(path):
     """Selects first file in folder, use under assumption there is only one file in folder
@@ -37,9 +39,51 @@ def main():
     args = parser.parse_args()
 
     train_df =  pd.read_csv(select_first_file(args.train_data))
-    y_train=train_df["Price"]
+    train_label=train_df["Price"]
     train_df=train_df.drop(columns=['Price'])
     
     test_df = pd.read_csv(select_first_file(args.test_data))
-    y_test=test_df["Price"]
+    test_label=test_df["Price"]
     test_df=test_df.drop(columns=['Price'])
+
+    #convert into array
+    X_train=train.df.values
+    y_train=train_label.values
+
+    X_test=test_df.values
+    y_test=test_label.values
+
+    #fit the model
+    lr=LinearRegression()
+    lr.fit(X_train,y_train)
+
+    y_pred=lr.predict(X_test)
+    print(r2_score(y_test,y_pred))
+    
+    #register the model to the workspace
+    print("registering the model")
+    mlflow.sklearn.log_model(
+        sk_model=lr,
+        registered_model_name=args.registered_model_name,
+        artifact_path=args.registered_model_name,
+    )
+
+    #saving the model
+    mlflow.sklearn.save_model(
+        sk_model=lr,
+        path=os.path.join(args.model,"trained_model"),
+    )
+
+    #stop logging
+    mlflow.end_run()
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
